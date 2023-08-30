@@ -34,6 +34,12 @@ module MCollective
                           :description => "Show command descriptions",
                           :default => false,
                           :type => :boolean
+
+        self.class.option :__environment,
+                          :arguments => ["--environment ENVIRONMENT"],
+                          :description => "The environment to find tasks",
+                          :default => "production",
+                          :type => String
       end
 
       def status_options
@@ -116,7 +122,7 @@ Examples:
 
         abort("Please specify a task to run") unless task
 
-        cli.create_task_options(task, "production", self)
+        cli.create_task_options(task, extract_environment_from_argv, self)
 
         self.class.option :__summary,
                           :arguments => ["--summary"],
@@ -155,6 +161,12 @@ Examples:
                           :required => false,
                           :default => nil,
                           :type => String
+
+      self.class.option :__environment,
+                          :arguments => ["--environment ENVIRONMENT"],
+                          :description => "The environment to find tasks",
+                          :default => "production",
+                          :type => String
       end
 
       def say(msg="")
@@ -169,7 +181,7 @@ Examples:
         say("Retrieving task metadata for task %s from the Puppet Server" % task)
 
         begin
-          meta = cli.task_metadata(task, "production")
+          meta = cli.task_metadata(task, configuration[:__environment])
         rescue
           abort($!.to_s)
         end
@@ -180,7 +192,7 @@ Examples:
         say("Attempting to download and run task %s on %d nodes" % [Util.colorize(:bold, task), bolt_tasks.discover.size])
         say
 
-        download_files(task, meta["files"])
+        download_files(task, meta["files"], configuration[:__environment])
 
         request = {
           :task => task,
@@ -219,7 +231,7 @@ Examples:
         reset_client!
       end
 
-      def download_files(task, files)
+      def download_files(task, files, environment)
         bolt_tasks.batch_size = 50
         bolt_tasks.batch_sleep_time = 1
 
@@ -229,7 +241,7 @@ Examples:
         cnt = bolt_tasks.discover.size
         idx = 0
 
-        bolt_tasks.download(:environment => "production", :task => task, :files => files.to_json) do |_, s|
+        bolt_tasks.download(:environment => environment, :task => task, :files => files.to_json) do |_, s|
           unless configuration[:__json_format]
             print(cli.twirl("Downloading and verifying %d file(s) from the Puppet Server to all nodes:" % [files.size], cnt, idx + 1))
             puts if cnt == idx + 1
@@ -356,7 +368,7 @@ Examples:
       end
 
       def list_command
-        cli.show_task_list("production", configuration[:__detail])
+        cli.show_task_list(configuration[:__environment], configuration[:__detail])
       end
 
       def run
@@ -368,8 +380,8 @@ Examples:
         super
       end
 
-      def show_task_help(task)
-        cli.show_task_help(task, "production")
+      def show_task_help(task, environment)
+        cli.show_task_help(task, environment)
       end
 
       def bolt_tasks
@@ -417,7 +429,7 @@ Examples:
         if valid_commands.include?(configuration[:__command])
           send("%s_command" % configuration[:__command])
         else
-          show_task_help(configuration[:__command])
+          show_task_help(configuration[:__command], configuration[:__environment])
         end
       end
     end
