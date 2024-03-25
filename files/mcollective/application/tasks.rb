@@ -36,7 +36,7 @@ module MCollective
                           :type => :boolean
 
         self.class.option :__environment,
-                          :arguments => ["--environment ENVIRONMENT"],
+                          :arguments => ["-E ENVIRONMENT"],
                           :description => "The environment to find tasks",
                           :default => "production",
                           :type => String
@@ -163,7 +163,7 @@ Examples:
                           :type => String
 
       self.class.option :__environment,
-                          :arguments => ["--environment ENVIRONMENT"],
+                          :arguments => ["-E ENVIRONMENT"],
                           :description => "The environment to find tasks",
                           :default => "production",
                           :type => String
@@ -394,7 +394,7 @@ Examples:
       end
 
       def extract_environment_from_argv
-        idx = ARGV.index("--environment")
+        idx = ARGV.index("-E")
 
         return "production" unless idx
 
