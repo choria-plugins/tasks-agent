@@ -1,3 +1,0 @@
----
-mcollective_agent_bolt_tasks::package_dependencies:
-  pxp-agent: "present"
